@@ -1785,7 +1785,11 @@ func (g *Generator) generateMessage(message *Descriptor) {
 		fieldName, fieldGetterName := ns[0], ns[1]
 		typename, wiretype := g.GoType(message, field)
 		jsonName := *field.Name
-		tag := fmt.Sprintf("protobuf:%s json:%q", g.goTag(message, field, wiretype), jsonName+",omitempty")
+		if field.GetName() == "Id" {
+			tag := fmt.Sprintf("protobuf:%s json:%q gorethink:%s", g.goTag(message, field, wiretype), jsonName+",omitempty", "\"id\"")
+		} else {
+			tag := fmt.Sprintf("protobuf:%s json:%q", g.goTag(message, field, wiretype), jsonName+",omitempty")
+		}
 
 		fieldNames[field] = fieldName
 		fieldGetterNames[field] = fieldGetterName
