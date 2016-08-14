@@ -1,4 +1,4 @@
-package micro
+package plimble
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ type micro struct {
 
 // Name returns the name of this plugin, "micro".
 func (g *micro) Name() string {
-	return "micro"
+	return "plimble"
 }
 
 // The names for packages imported in the generated code.
