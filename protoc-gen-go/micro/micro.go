@@ -204,7 +204,7 @@ func (g *micro) generateClientRequestSignature(servName string, method *pb.Metho
 	if reservedClientName[methName] {
 		methName += "_"
 	}
-	reqArg := "in *" + g.typeName(method.GetInputType())
+	reqArg := "req *" + g.typeName(method.GetInputType())
 	if method.GetClientStreaming() {
 		reqArg = ""
 	}
@@ -222,7 +222,7 @@ func (g *micro) generateClientPublishSignature(servName string, method *pb.Metho
 	if reservedClientName[methName] {
 		methName += "_"
 	}
-	reqArg := "in *" + g.typeName(method.GetInputType())
+	reqArg := "req *" + g.typeName(method.GetInputType())
 	if method.GetClientStreaming() {
 		reqArg = ""
 	}
@@ -243,7 +243,7 @@ func (g *micro) generateClientPublishMethod(reqServ, servName, serviceDescVar st
 	g.P("func (c *", unexport(servName), "Client) ", g.generateClientPublishSignature(servName, method), "{")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
 		// TODO: Pass descExpr to Invoke.
-		g.P("return ", `c.c.Publish(c.prefix+".`, methName, `", in)`)
+		g.P("return ", `c.c.Publish(c.prefix+".`, methName, `", req)`)
 		g.P("}")
 		g.P()
 		return
@@ -258,11 +258,11 @@ func (g *micro) generateClientRequestMethod(reqServ, servName, serviceDescVar st
 
 	g.P("func (c *", unexport(servName), "Client) ", g.generateClientRequestSignature(servName, method), "{")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
-		g.P("out := new(", outType, ")")
+		g.P("res := new(", outType, ")")
 		// TODO: Pass descExpr to Invoke.
-		g.P("err := ", `c.c.Request(c.prefix+".`, methName, `", in, out, micro.DefaultTimeout)`)
+		g.P("err := ", `c.c.Request(c.prefix+".`, methName, `", req, res, micro.DefaultTimeout)`)
 		g.P("if err != nil { return nil, err }")
-		g.P("return out, nil")
+		g.P("return res, nil")
 		g.P("}")
 		g.P()
 		return
@@ -279,6 +279,8 @@ func (g *micro) generateServerSignature(servName string, method *pb.MethodDescri
 
 	var reqArgs []string
 	ret := "error"
+
+	reqArgs = append(reqArgs, "*micro.Context")
 
 	if !method.GetClientStreaming() {
 		reqArgs = append(reqArgs, "*"+g.typeName(method.GetInputType()))
@@ -304,7 +306,7 @@ func (g *micro) generateServerQueueSubscribeMethod(servName string, method *pb.M
 		g.P(`}`)
 		g.P()
 		g.P(`res := new(`, outType, `)`)
-		g.P(`if err := h(req, res); err != nil {`)
+		g.P(`if err := h(ctx, req, res); err != nil {`)
 		g.P(`return err`)
 		g.P(`}`)
 		g.P()
@@ -334,7 +336,7 @@ func (g *micro) generateServerSubscribeMethod(servName string, method *pb.Method
 		g.P(`}`)
 		g.P()
 		g.P(`res := new(`, outType, `)`)
-		g.P(`if err := h(req, res); err != nil {`)
+		g.P(`if err := h(ctx, req, res); err != nil {`)
 		g.P(`return err`)
 		g.P(`}`)
 		g.P()
