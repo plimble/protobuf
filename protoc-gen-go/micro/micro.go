@@ -13,8 +13,7 @@ import (
 // Paths for packages used by code generated in this file,
 // relative to the import_prefix of the generator.Generator.
 const (
-	microPkgPath  = "github.com/plimble/micro"
-	encodePkgPath = "github.com/plimble/micro/protobuf"
+	microPkgPath = "github.com/plimble/micro"
 )
 
 func init() {
@@ -36,15 +35,13 @@ func (g *micro) Name() string {
 // They may vary from the final path component of the import path
 // if the name is used by other packages.
 var (
-	microPkg  string
-	encodePkg string
+	microPkg string
 )
 
 // Init initializes the plugin.
 func (g *micro) Init(gen *generator.Generator) {
 	g.gen = gen
 	microPkg = generator.RegisterUniquePackageName("micro", nil)
-	encodePkg = generator.RegisterUniquePackageName("protobuf", nil)
 }
 
 // Given a type name defined in a .proto, return its object.
@@ -85,7 +82,6 @@ func (g *micro) GenerateImports(file *generator.FileDescriptor) {
 	}
 	g.P("import (")
 	g.P(microPkg, " ", strconv.Quote(path.Join(g.gen.ImportPrefix, microPkgPath)))
-	g.P(encodePkg, " ", strconv.Quote(path.Join(g.gen.ImportPrefix, encodePkgPath)))
 	g.P(")")
 	g.P()
 }
@@ -161,11 +157,10 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 		// g.gen.PrintComments(fmt.Sprintf("%s,2,%d", path, i)) // 2 means method in a service.
 		g.P(g.generateServerSignature(servName, method))
 	}
-	g.P("}")
 	g.P()
 	// Server QueueSubscribe.
 
-	g.P("type ", servName, "QueueSubscribe ", "{")
+	g.P("type ", servName, "QueueSubscribe struct", "{")
 	g.P("m *", microPkg, ".Micro")
 	g.P("prefix string")
 	g.P("}")
@@ -183,7 +178,7 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 		g.generateServerQueueSubscribeMethod(servName, method)
 	}
 
-	g.P("type ", servName, "Subscribe ", "{")
+	g.P("type ", servName, "Subscribe struct", "{")
 	g.P("m *", microPkg, ".Micro")
 	g.P("prefix string")
 	g.P("}")
@@ -209,7 +204,7 @@ func (g *micro) generateClientRequestSignature(servName string, method *pb.Metho
 	if reservedClientName[methName] {
 		methName += "_"
 	}
-	reqArg := ", in *" + g.typeName(method.GetInputType())
+	reqArg := "in *" + g.typeName(method.GetInputType())
 	if method.GetClientStreaming() {
 		reqArg = ""
 	}
@@ -227,7 +222,7 @@ func (g *micro) generateClientPublishSignature(servName string, method *pb.Metho
 	if reservedClientName[methName] {
 		methName += "_"
 	}
-	reqArg := ", in *" + g.typeName(method.GetInputType())
+	reqArg := "in *" + g.typeName(method.GetInputType())
 	if method.GetClientStreaming() {
 		reqArg = ""
 	}
@@ -240,15 +235,13 @@ func (g *micro) generateClientPublishSignature(servName string, method *pb.Metho
 }
 
 func (g *micro) generateClientPublishMethod(reqServ, servName, serviceDescVar string, method *pb.MethodDescriptorProto, descExpr string) {
-	reqMethod := fmt.Sprintf("%s.%s", servName, method.GetName())
+	// reqMethod := fmt.Sprintf("%s.%s", servName, method.GetName())
 	methName := generator.CamelCase(method.GetName())
 	// inType := g.typeName(method.GetInputType())
-	outType := g.typeName(method.GetOutputType())
+	// outType := g.typeName(method.GetOutputType())
 
 	g.P("func (c *", unexport(servName), "Client) ", g.generateClientPublishSignature(servName, method), "{")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
-		g.P(`req := c.c.NewRequest(c.serviceName, "`, reqMethod, `", in)`)
-		g.P("out := new(", outType, ")")
 		// TODO: Pass descExpr to Invoke.
 		g.P("return ", `c.c.Publish(c.prefix+".`, methName, `", in)`)
 		g.P("}")
@@ -258,17 +251,16 @@ func (g *micro) generateClientPublishMethod(reqServ, servName, serviceDescVar st
 }
 
 func (g *micro) generateClientRequestMethod(reqServ, servName, serviceDescVar string, method *pb.MethodDescriptorProto, descExpr string) {
-	reqMethod := fmt.Sprintf("%s.%s", servName, method.GetName())
+	// reqMethod := fmt.Sprintf("%s.%s", servName, method.GetName())
 	methName := generator.CamelCase(method.GetName())
 	// inType := g.typeName(method.GetInputType())
 	outType := g.typeName(method.GetOutputType())
 
 	g.P("func (c *", unexport(servName), "Client) ", g.generateClientRequestSignature(servName, method), "{")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
-		g.P(`req := c.c.NewRequest(c.serviceName, "`, reqMethod, `", in)`)
 		g.P("out := new(", outType, ")")
 		// TODO: Pass descExpr to Invoke.
-		g.P("err := ", `c.c.Request(c.prefix+"`, methName, `", in, out, micro.DefaultTimeout)`)
+		g.P("err := ", `c.c.Request(c.prefix+".`, methName, `", in, out, micro.DefaultTimeout)`)
 		g.P("if err != nil { return nil, err }")
 		g.P("return out, nil")
 		g.P("}")
@@ -302,10 +294,10 @@ func (g *micro) generateServerQueueSubscribeMethod(servName string, method *pb.M
 	inType := g.typeName(method.GetInputType())
 	outType := g.typeName(method.GetOutputType())
 
-	g.P("func (dq *", servName, "QueueSubscribe) ", methName, "(h", methName, "Handler) {")
+	g.P("func (dq *", servName, "QueueSubscribe) ", methName, "(h ", methName, "Handler) {")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
 		g.P(`subj := dq.prefix+".`, methName, `"`)
-		g.P(`dq.QueueSubscribe(subj, subj, func(ctx *`, microPkg, `.Context)) error {`)
+		g.P(`dq.m.QueueSubscribe(subj, subj, func(ctx *`, microPkg, `.Context) error {`)
 		g.P(`req := new(`, inType, `)`)
 		g.P(`if err := ctx.Decode(ctx.Data, req); err != nil {`)
 		g.P(`return err`)
@@ -321,6 +313,7 @@ func (g *micro) generateServerQueueSubscribeMethod(servName string, method *pb.M
 		g.P(`}`)
 		g.P()
 		g.P(`return nil`)
+		g.P(`})`)
 		g.P(`}`)
 		return
 	}
@@ -331,10 +324,10 @@ func (g *micro) generateServerSubscribeMethod(servName string, method *pb.Method
 	inType := g.typeName(method.GetInputType())
 	outType := g.typeName(method.GetOutputType())
 
-	g.P("func (ds *", servName, "Subscribe) ", methName, "(h", methName, "Handler) {")
+	g.P("func (ds *", servName, "Subscribe) ", methName, "(h ", methName, "Handler) {")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
-		g.P(`subj := dq.prefix+".`, methName, `"`)
-		g.P(`dq.Subscribe(subj, func(ctx *`, microPkg, `.Context)) error {`)
+		g.P(`subj := ds.prefix+".`, methName, `"`)
+		g.P(`ds.m.Subscribe(subj, func(ctx *`, microPkg, `.Context) error {`)
 		g.P(`req := new(`, inType, `)`)
 		g.P(`if err := ctx.Decode(ctx.Data, req); err != nil {`)
 		g.P(`return err`)
@@ -350,6 +343,7 @@ func (g *micro) generateServerSubscribeMethod(servName string, method *pb.Method
 		g.P(`}`)
 		g.P()
 		g.P(`return nil`)
+		g.P(`})`)
 		g.P(`}`)
 		return
 	}
