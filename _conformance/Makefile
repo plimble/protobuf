@@ -1,6 +1,6 @@
 # Go support for Protocol Buffers - Google's data interchange format
 #
-# Copyright 2010 The Go Authors.  All rights reserved.
+# Copyright 2016 The Go Authors.  All rights reserved.
 # https://github.com/plimble/protobuf
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,5 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Includable Makefile to add a rule for generating .pb.go files from .proto files
-# (Google protocol buffer descriptions).
-# Typical use if myproto.proto is a file in package mypackage in this directory:
-#
-#	include $(GOROOT)/src/pkg/github.com/plimble/protobuf/Make.protobuf
-
-%.pb.go:	%.proto
-	protoc --go_out=. $<
-
+regenerate:
+	protoc --go_out=Mgoogle/protobuf/any.proto=github.com/plimble/protobuf/ptypes/any,Mgoogle/protobuf/duration.proto=github.com/plimble/protobuf/ptypes/duration,Mgoogle/protobuf/struct.proto=github.com/plimble/protobuf/ptypes/struct,Mgoogle/protobuf/timestamp.proto=github.com/plimble/protobuf/ptypes/timestamp,Mgoogle/protobuf/wrappers.proto=github.com/plimble/protobuf/ptypes/wrappers,Mgoogle/protobuf/field_mask.proto=google.golang.org/genproto/protobuf:. conformance_proto/conformance.proto

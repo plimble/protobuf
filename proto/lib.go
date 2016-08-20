@@ -1,7 +1,7 @@
 // Go support for Protocol Buffers - Google's data interchange format
 //
 // Copyright 2010 The Go Authors.  All rights reserved.
-// https://github.com/golang/protobuf
+// https://github.com/plimble/protobuf
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -100,7 +100,7 @@ The resulting file, test.pb.go, is:
 
 	package example
 
-	import proto "github.com/golang/protobuf/proto"
+	import proto "github.com/plimble/protobuf/proto"
 	import math "math"
 
 	type FOO int32
@@ -227,7 +227,7 @@ To create and play with a Test object:
 	import (
 		"log"
 
-		"github.com/golang/protobuf/proto"
+		"github.com/plimble/protobuf/proto"
 		pb "./example.pb"
 	)
 
@@ -308,7 +308,7 @@ func GetStats() Stats { return stats }
 // temporary Buffer and are fine for most applications.
 type Buffer struct {
 	buf   []byte // encode/decode byte stream
-	index int    // write point
+	index int    // read point
 
 	// pools of basic types to amortize allocation.
 	bools   []bool

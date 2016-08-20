@@ -1,4 +1,4 @@
-package plimble
+package micro
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	pb "github.com/plimble/protobuf/protoc-gen-go/descriptor"
 	"github.com/plimble/protobuf/protoc-gen-go/generator"
 )
 
@@ -29,7 +29,7 @@ type micro struct {
 
 // Name returns the name of this plugin, "micro".
 func (g *micro) Name() string {
-	return "plimble"
+	return "micro"
 }
 
 // The names for packages imported in the generated code.
@@ -64,6 +64,7 @@ func (g *micro) P(args ...interface{}) { g.gen.P(args...) }
 
 // Generate generates code for the services in the given file.
 func (g *micro) Generate(file *generator.FileDescriptor) {
+	fmt.Println("@@@@@")
 	if len(file.FileDescriptorProto.Service) == 0 {
 		return
 	}
@@ -199,56 +200,6 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 	for _, method := range service.Method {
 		g.generateServerSubscribeMethod(servName, method)
 	}
-
-	// // Handler type
-	// g.P("type ", servName, " struct {")
-	// g.P(serverType)
-	// g.P("}")
-	// g.P()
-
-	// // Server handler implementations.
-	// var handlerNames []string
-	// for _, method := range service.Method {
-	// 	hname := g.generateServerMethod(servName, method)
-	// 	handlerNames = append(handlerNames, hname)
-	// }
-
-	/*
-		// Service descriptor.
-		g.P("var ", serviceDescVar, " = ", serverPkg, ".ServiceDesc {")
-		g.P("ServiceName: ", strconv.Quote(fullServName), ",")
-		g.P("HandlerType: (*", serverType, ")(nil),")
-		g.P("Methods: []", serverPkg, ".MethodDesc{")
-		for i, method := range service.Method {
-			if method.GetServerStreaming() || method.GetClientStreaming() {
-				continue
-			}
-			g.P("{")
-			g.P("MethodName: ", strconv.Quote(method.GetName()), ",")
-			g.P("Handler: ", handlerNames[i], ",")
-			g.P("},")
-		}
-		g.P("},")
-		g.P("Streams: []", serverPkg, ".StreamDesc{")
-		for i, method := range service.Method {
-			if !method.GetServerStreaming() && !method.GetClientStreaming() {
-				continue
-			}
-			g.P("{")
-			g.P("StreamName: ", strconv.Quote(method.GetName()), ",")
-			g.P("Handler: ", handlerNames[i], ",")
-			if method.GetServerStreaming() {
-				g.P("ServerStreams: true,")
-			}
-			if method.GetClientStreaming() {
-				g.P("ClientStreams: true,")
-			}
-			g.P("},")
-		}
-		g.P("},")
-		g.P("}")
-		g.P()
-	*/
 }
 
 // generateClientSignature returns the client-side signature for a method.

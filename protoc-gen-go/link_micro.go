@@ -1,6 +1,6 @@
 // Go support for Protocol Buffers - Google's data interchange format
 //
-// Copyright 2010 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors.  All rights reserved.
 // https://github.com/plimble/protobuf
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,18 +29,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-syntax = "proto2";
+package main
 
-package multitest;
-
-message Multi2 {
-  required int32 required_value = 1;
-
-  enum Color {
-    BLUE = 1;
-    GREEN = 2;
-    RED = 3;
-  };
-  optional Color color = 2;
-}
-
+import _ "github.com/plimble/protobuf/protoc-gen-go/micro"

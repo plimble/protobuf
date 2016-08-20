@@ -1,7 +1,7 @@
 # Go support for Protocol Buffers - Google's data interchange format
 #
 # Copyright 2010 The Go Authors.  All rights reserved.
-# https://github.com/golang/protobuf
+# https://github.com/plimble/protobuf
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -35,5 +35,5 @@ regenerate:
 	echo WARNING! THIS RULE IS PROBABLY NOT RIGHT FOR YOUR INSTALLATION
 	protoc --go_out=. -I$(HOME)/src/protobuf/src $(HOME)/src/protobuf/src/google/protobuf/descriptor.proto && \
 		sed 's,^package google_protobuf,package descriptor,' google/protobuf/descriptor.pb.go > \
-		$(GOPATH)/src/github.com/golang/protobuf/protoc-gen-go/descriptor/descriptor.pb.go && \
+		$(GOPATH)/src/github.com/plimble/protobuf/protoc-gen-go/descriptor/descriptor.pb.go && \
 		rm -f google/protobuf/descriptor.pb.go
