@@ -243,7 +243,7 @@ func (g *micro) generateClientPublishMethod(reqServ, servName, serviceDescVar st
 	g.P("func (c *", unexport(servName), "Client) ", g.generateClientPublishSignature(servName, method), "{")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
 		// TODO: Pass descExpr to Invoke.
-		g.P("return ", `c.c.Publish(c.prefix+".`, methName, `", req)`)
+		g.P("return ", `c.c.Publish(c.prefix+".`, strings.ToLower(methName), `", req)`)
 		g.P("}")
 		g.P()
 		return
@@ -260,7 +260,7 @@ func (g *micro) generateClientRequestMethod(reqServ, servName, serviceDescVar st
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
 		g.P("res := new(", outType, ")")
 		// TODO: Pass descExpr to Invoke.
-		g.P("err := ", `c.c.Request(c.prefix+".`, methName, `", req, res, micro.DefaultTimeout)`)
+		g.P("err := ", `c.c.Request(c.prefix+".`, strings.ToLower(methName), `", req, res, micro.DefaultTimeout)`)
 		g.P("if err != nil { return nil, err }")
 		g.P("return res, nil")
 		g.P("}")
@@ -298,7 +298,7 @@ func (g *micro) generateServerQueueSubscribeMethod(servName string, method *pb.M
 
 	g.P("func (dq *", servName, "QueueSubscribe) ", methName, "(h ", methName, "Handler) {")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
-		g.P(`subj := dq.prefix+".`, methName, `"`)
+		g.P(`subj := dq.prefix+".`, strings.ToLower(methName), `"`)
 		g.P(`dq.m.QueueSubscribe(subj, subj, func(ctx *`, microPkg, `.Context) error {`)
 		g.P(`req := new(`, inType, `)`)
 		g.P(`if err := ctx.Decode(ctx.Data, req); err != nil {`)
@@ -328,7 +328,7 @@ func (g *micro) generateServerSubscribeMethod(servName string, method *pb.Method
 
 	g.P("func (ds *", servName, "Subscribe) ", methName, "(h ", methName, "Handler) {")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
-		g.P(`subj := ds.prefix+".`, methName, `"`)
+		g.P(`subj := ds.prefix+".`, strings.ToLower(methName), `"`)
 		g.P(`ds.m.Subscribe(subj, func(ctx *`, microPkg, `.Context) error {`)
 		g.P(`req := new(`, inType, `)`)
 		g.P(`if err := ctx.Decode(ctx.Data, req); err != nil {`)
