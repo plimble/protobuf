@@ -213,7 +213,7 @@ func (g *micro) generateClientRequestSignature(servName string, method *pb.Metho
 		respName = servName + "_" + generator.CamelCase(origMethName) + "Client"
 	}
 
-	return fmt.Sprintf("%s(%s) (%s, error)", methName+"Request", reqArg, respName)
+	return fmt.Sprintf("%s(%s, opts ...micro.ClientOption) (%s, error)", methName+"Request", reqArg, respName)
 }
 
 func (g *micro) generateClientPublishSignature(servName string, method *pb.MethodDescriptorProto) string {
@@ -231,7 +231,7 @@ func (g *micro) generateClientPublishSignature(servName string, method *pb.Metho
 		// respName = servName + "_" + generator.CamelCase(origMethName) + "Client"
 	}
 
-	return fmt.Sprintf("%s(%s) (error)", methName+"Publish", reqArg)
+	return fmt.Sprintf("%s(%s, opts ...micro.ClientOption) (error)", methName+"Publish", reqArg)
 }
 
 func (g *micro) generateClientPublishMethod(reqServ, servName, serviceDescVar string, method *pb.MethodDescriptorProto, descExpr string) {
@@ -243,7 +243,7 @@ func (g *micro) generateClientPublishMethod(reqServ, servName, serviceDescVar st
 	g.P("func (c *", unexport(servName), "Client) ", g.generateClientPublishSignature(servName, method), "{")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
 		// TODO: Pass descExpr to Invoke.
-		g.P("return ", `c.c.Publish(c.prefix+".`, strings.ToLower(methName), `", req)`)
+		g.P("return ", `c.c.Publish(c.prefix+".`, strings.ToLower(methName), `", req, opts...)`)
 		g.P("}")
 		g.P()
 		return
@@ -260,7 +260,7 @@ func (g *micro) generateClientRequestMethod(reqServ, servName, serviceDescVar st
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
 		g.P("res := new(", outType, ")")
 		// TODO: Pass descExpr to Invoke.
-		g.P("err := ", `c.c.Request(c.prefix+".`, strings.ToLower(methName), `", req, res, micro.DefaultTimeout)`)
+		g.P("err := ", `c.c.Request(c.prefix+".`, strings.ToLower(methName), `", req, res, opts...)`)
 		g.P("if err != nil { return nil, err }")
 		g.P("return res, nil")
 		g.P("}")
