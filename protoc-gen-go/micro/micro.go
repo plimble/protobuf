@@ -151,50 +151,21 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 	g.P()
 
 	// Server interface.
-	// serverType := servName + "Handler"
-	// g.P("type ", serverType, " interface {")
-	for _, method := range service.Method {
-		// g.gen.PrintComments(fmt.Sprintf("%s,2,%d", path, i)) // 2 means method in a service.
+	g.P("type ", servName, " interface {")
+	for i, method := range service.Method {
+		g.gen.PrintComments(fmt.Sprintf("%s,2,%d", path, i)) // 2 means method in a service.
 		g.P(g.generateServerSignature(servName, method))
 	}
-	g.P()
-	// Server QueueSubscribe.
-
-	g.P("type ", servName, "QueueSubscribe struct", "{")
-	g.P("m *", microPkg, ".Micro")
-	g.P("prefix string")
 	g.P("}")
 	g.P()
 
-	g.P("func New", servName, "QueueSubscribe (prefix string, m *", microPkg, ".Micro) *", servName, "QueueSubscribe {")
-	g.P("return &", servName, "QueueSubscribe{")
-	g.P("m: m,")
-	g.P("prefix: prefix,")
-	g.P("}")
-	g.P("}")
-	g.P()
-
+	// RegisterHandler
+	g.P("func Register", servName, "(m *", microPkg, ".Micro, prefix string, service ", servName, ") {")
 	for _, method := range service.Method {
-		g.generateServerQueueSubscribeMethod(servName, method)
+		g.generateServiceRegister(servName, method)
 	}
-
-	g.P("type ", servName, "Subscribe struct", "{")
-	g.P("m *", microPkg, ".Micro")
-	g.P("prefix string")
 	g.P("}")
 	g.P()
-
-	g.P("func New", servName, "Subscribe (prefix string, m *", microPkg, ".Micro) *", servName, "Subscribe {")
-	g.P("return &", servName, "Subscribe{")
-	g.P("m: m,")
-	g.P("prefix: prefix,")
-	g.P("}")
-	g.P("}")
-	g.P()
-
-	for _, method := range service.Method {
-		g.generateServerSubscribeMethod(servName, method)
-	}
 }
 
 // generateClientSignature returns the client-side signature for a method.
@@ -288,7 +259,32 @@ func (g *micro) generateServerSignature(servName string, method *pb.MethodDescri
 	if !method.GetClientStreaming() && !method.GetServerStreaming() {
 		reqArgs = append(reqArgs, "*"+g.typeName(method.GetOutputType()))
 	}
-	return "type " + methName + "Handler func(" + strings.Join(reqArgs, ", ") + ") " + ret
+	return methName + "(" + strings.Join(reqArgs, ", ") + ") " + ret
+}
+
+func (g *micro) generateServiceRegister(servName string, method *pb.MethodDescriptorProto) {
+	methName := generator.CamelCase(method.GetName())
+	inType := g.typeName(method.GetInputType())
+	outType := g.typeName(method.GetOutputType())
+
+	g.P(`m.QueueSubscribe(prefix+".`, strings.ToLower(methName), `"`, `, prefix+".`, strings.ToLower(methName), `",`, `func(ctx *`, microPkg, `.Context) error {`)
+	g.P(`req := new(`, inType, `)`)
+	g.P(`if err := ctx.Decode(ctx.Data, req); err != nil {`)
+	g.P(`return err`)
+	g.P(`}`)
+	g.P()
+	g.P(`res := new(`, outType, `)`)
+	g.P(`if err := service.`, methName, `(ctx, req, res); err != nil {`)
+	g.P(`return err`)
+	g.P(`}`)
+	g.P()
+	g.P(`if ctx.Reply != "" {`)
+	g.P(`ctx.Publish(ctx.Reply, res)`)
+	g.P(`}`)
+	g.P()
+	g.P(`return nil`)
+	g.P(`})`)
+	g.P()
 }
 
 func (g *micro) generateServerQueueSubscribeMethod(servName string, method *pb.MethodDescriptorProto) {
